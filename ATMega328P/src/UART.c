@@ -1,6 +1,6 @@
 #include <avr/io.h>
 #include <stdio.h>
-#include "uart.h"
+#include "UART.h"
 
 void USART_init(void) {
 	// Configurar Baud Rate

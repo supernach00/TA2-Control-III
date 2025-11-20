@@ -5,39 +5,45 @@
  * Author : nacho
  */ 
 
-#include "funciones.h"
 #include "UART.h"
+#include "funciones_generales.h"
+#include "funciones_identificacion.h"
+#include "funciones_control.h"
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stdio.h>
 
-volatile uint8_t contador_PRBS = 0;
-volatile uint16_t tension_entrada;
-volatile uint16_t tension_filtrada = 0;
-volatile uint16_t registro_LFSR = 0;
-volatile uint8_t flag_test_PRBS = 0;
-volatile uint16_t N = 0;
+// Variables interrupciones
+volatile uint8_t flag_lectura_ADC = 0;
+volatile uint8_t contador_30ms = 0;
+volatile uint16_t contador_15seg = 0;
 
-uint8_t flag_lectura_ADC = 0;
+ISR(TIMER2_COMPA_vect) // Interrupción cada 1 ms
+{
+    if (++contador_30ms >= 30)
+    {
+        contador_30ms = 0;
+		flag_lectura_ADC = 1;
 
-#define referencia 3000 // (En milivoltios)
+	}
 
-ISR(TIMER1_OVF_vect) {
+    if (++contador_15seg >= 15000) 
+    {
+
+        contador_15seg = 0;
+		cambiar_referencia(1000, 4000); // Cambia la referencia entre 1V y 4V cada 10 segundos
+
+	}
+}
+
+ISR(PCINT2_vect) { // Interrupción cuando se presiona el switch 1 (PD4)
 	
-	flag_lectura_ADC = 1;
-	
-	};
-
-ISR(PCINT2_vect) { 
-	
-    // Código que se ejecuta cuando se dispara la interrupción en PD4 (Switch 1)
-
     if (PIND & (1 << PD4)) {
 
-		terminar_test_PRBS(); // Me aseguro de que el test PRBS esté detenido antes de comenzar el test del escalón.
-
-		comenzar_test_escalon(1000, 4000); // Test de respuesta al escalon: de 1V a 4V en 5 segundos, sale por PB1.
+		perturbacion_activada = 1;
+		delta = 1000; 
 
     } else {
 
@@ -45,23 +51,21 @@ ISR(PCINT2_vect) {
 
 };
 
-ISR(INT1_vect)
+ISR(INT1_vect) // Interrupción cuando se presiona el switch 2 (PD3)
 {
-    // Código que se ejecuta cuando se dispara la interrupción en PD3  (Switch 2)
 
-	comenzar_test_PRBS();
-
+		perturbacion_activada = 0;
+		delta = 0; 
 }
 
-ISR(TIMER0_COMPA_vect)
+ISR(TIMER0_COMPA_vect) // Código que se ejecuta a 61 Hz (cada 16.39 ms)
 {
-    // Código que se ejecuta a 61 Hz
 
 	contador_PRBS++;
 
 	if (contador_PRBS >= 4) { 
 
-		// Cada 4 interrupciones de Timer0 (61 Hz), se generan nuevos bits del PRBS.
+		// Cada 4 interrupciones de Timer0 (osea, cada 65.56 ms), se generan nuevos bits del PRBS.
 
 		N++; // N lleva cuenta de la cantidad de bits generados en el test de PRBS. Termina cuando N = 2047.
 
@@ -80,24 +84,26 @@ ISR(TIMER0_COMPA_vect)
 
 	int main(void)
 	{
+		
 		setup_ADC();
 		setup_PWM();
 		setup_SWITCHS();
 		setup_LFSR();
 		USART_init();
 		sei();
-
+		
 		while (1)
 		{
 
 			if (flag_lectura_ADC) {
 
 				flag_lectura_ADC = 0;
-
+				PORTB |= (1 << PB0);
 				aplicar_control_PID(referencia);
+				PORTB ^= (1 << PB0);
+			}
+		}
 
-		} 
-
-    return 0;
-}
+		return 0;
+	}
 
