@@ -5,6 +5,8 @@ void setup_ADC(void){
 	// Esta funcion configura el ADC para realizar lecturas en el pin ADC5 con una referencia de 5V y un prescaler de 128.
 	
 	/*
+	TIMER = ADC
+	MODO = SINGLE CONVERSION
 	PRESCALER = 128 (f_adc = 125Khz)
 	ADC = ENABLE
 	ADC INTERRUPT = ENABLE

@@ -34,6 +34,7 @@ ISR(TIMER2_COMPA_vect) // Interrupción cada 1 ms
 
         contador_15seg = 0;
 		cambiar_referencia(1000, 4000); // Cambia la referencia entre 1V y 4V cada 10 segundos
+		PORTB ^= (1 << PB0);
 
 	}
 }
@@ -98,9 +99,7 @@ ISR(TIMER0_COMPA_vect) // Código que se ejecuta a 61 Hz (cada 16.39 ms)
 			if (flag_lectura_ADC) {
 
 				flag_lectura_ADC = 0;
-				PORTB |= (1 << PB0);
 				aplicar_control_PID(referencia);
-				PORTB ^= (1 << PB0);
 			}
 		}
 
