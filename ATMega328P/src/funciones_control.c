@@ -11,6 +11,11 @@ volatile int32_t e1 = 0;
 volatile int32_t e2 = 0;
 volatile int32_t u1 = 0;
 volatile int32_t u2 = 0;
+volatile int32_t e = 0;
+
+volatile int32_t i = 0;
+//volatile int16_t errorUart[1100];
+
 const int32_t escalado = 1000;
 
 // Coeficientes del PID
@@ -32,7 +37,7 @@ void aplicar_control_PID(uint16_t ref){
 
 uint16_t controlador_PID(uint16_t ref1, uint16_t medicion){
 
-	int32_t e = (int32_t)ref1 - (int32_t)medicion;
+	e = (int32_t)ref1 - (int32_t)medicion;
 
 	// Usamos 64 bits para evitar overflow durante la acumulacion
 	int64_t acc =
