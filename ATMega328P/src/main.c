@@ -19,6 +19,9 @@
 volatile uint8_t flag_lectura_ADC = 0;
 volatile uint8_t contador_30ms = 0;
 volatile uint16_t contador_15seg = 0;
+volatile uint16_t contador_3seg = 0;
+extern volatile int32_t e;
+extern volatile int32_t i;
 
 ISR(TIMER2_COMPA_vect) // Interrupción cada 1 ms
 {
@@ -29,7 +32,7 @@ ISR(TIMER2_COMPA_vect) // Interrupción cada 1 ms
 
 	}
 
-    if (++contador_15seg >= 15000) 
+    if (++contador_15seg >= 10000) 
     {
 
         contador_15seg = 0;
@@ -37,6 +40,13 @@ ISR(TIMER2_COMPA_vect) // Interrupción cada 1 ms
 		PORTB ^= (1 << PB0);
 
 	}
+    // Descomentar para activar perturbacion automatica cada 3 seg
+    // if (++contador_3seg >= 3000) 
+	// {
+	// 	contador_3seg = 0;
+	// 	perturbacion_activada = 1;
+	// 	delta = (delta == 0) ? 1000 : 0;
+	// }
 }
 
 ISR(PCINT2_vect) { // Interrupción cuando se presiona el switch 1 (PD4)
@@ -44,9 +54,7 @@ ISR(PCINT2_vect) { // Interrupción cuando se presiona el switch 1 (PD4)
     if (PIND & (1 << PD4)) {
 
 		perturbacion_activada = 1;
-		delta = 1000; 
-
-    } else {
+		delta = 500; 
 
     }
 
@@ -54,33 +62,32 @@ ISR(PCINT2_vect) { // Interrupción cuando se presiona el switch 1 (PD4)
 
 ISR(INT1_vect) // Interrupción cuando se presiona el switch 2 (PD3)
 {
-
-		perturbacion_activada = 0;
-		delta = 0; 
+		 perturbacion_activada = 1;
+		 delta = 0; 
 }
 
 ISR(TIMER0_COMPA_vect) // Código que se ejecuta a 61 Hz (cada 16.39 ms)
 {
 
-	contador_PRBS++;
+	// contador_PRBS++;
 
-	if (contador_PRBS >= 4) { 
+	// if (contador_PRBS >= 4) { 
 
-		// Cada 4 interrupciones de Timer0 (osea, cada 65.56 ms), se generan nuevos bits del PRBS.
+	// 	// Cada 4 interrupciones de Timer0 (osea, cada 65.56 ms), se generan nuevos bits del PRBS.
 
-		N++; // N lleva cuenta de la cantidad de bits generados en el test de PRBS. Termina cuando N = 2047.
+	// 	N++; // N lleva cuenta de la cantidad de bits generados en el test de PRBS. Termina cuando N = 2047.
 
-		if (N == 2047) {
+	// 	if (N == 2047) {
 
-			terminar_test_PRBS();
+	// 		terminar_test_PRBS();
 
-		} else {
+	// 	} else {
 		
-			contador_PRBS = 0;
-			actualizar_PWM_PRBS();
+	// 		contador_PRBS = 0;
+	// 		actualizar_PWM_PRBS();
 
-		}
-	}
+	// 	}
+	// }
 }
 
 	int main(void)
