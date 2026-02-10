@@ -20,7 +20,9 @@ extern volatile uint16_t referencia;
 
 // Funciones de control y filtros
 uint16_t controlador_PID(uint16_t referencia, uint16_t medicion);
+uint16_t controlador_MPC(uint16_t referencia);
 void aplicar_control_PID(uint16_t referencia);
+void aplicar_control_MPC(uint16_t referencia);
 void cambiar_referencia(uint16_t bajo, uint16_t alto);
 
 #endif /* FUNCIONES_CONTROL_H_ */

@@ -14,6 +14,9 @@
 // #define C  4.8828125 // C = 5000mV / 1024;
 #define C  4.88 // C = 5000mV / 1024;
 
+// Variables externas
+extern volatile uint16_t estados[6];
+
 // Funciones de configuracion
 void setup_ADC(void);
 void setup_PWM(void);
@@ -21,6 +24,7 @@ void setup_SWITCHS(void);
 
 // Funciones generales
 uint16_t leer_ADC(void);
+void leer_adc_multiple(void);
 uint16_t tension_a_WC(uint16_t tension);
 
 

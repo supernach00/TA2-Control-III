@@ -1,8 +1,27 @@
 #include "funciones_generales.h"
 
+volatile uint16_t estados[6] = {0, 0, 0, 0, 0, 0}; // Array para almacenar los valores leídos del ADC
+
+void leer_adc_multiple(void) {
+
+	// Esta funcion realiza una lectura del ADC0, ADC1 y ADC2, ADC3, ADC4 y ADC5 de forma secuencial y almacena los valores en el array estados.
+
+	for(uint8_t i = 0; i < 6; i++) {
+
+        // Limpio los bits MUX sin tocar REFS
+        ADMUX = (ADMUX & 0xF0) | (i + 1);
+
+        _delay_us(10);   // Tiempo de espera después de cambiar MUX
+
+        estados[i] = leer_ADC();
+    }
+
+};
+
 void setup_ADC(void){
 	
-	// Esta funcion configura el ADC para realizar lecturas en el pin ADC5 con una referencia de 5V y un prescaler de 128.
+	// Esta funcion configura el ADC para realizar lecturas con una referencia de 5V y un prescaler de 128.
+	// Por default, el ADC seleccionado es el 5.
 	
 	/*
 	TIMER = ADC
@@ -94,6 +113,7 @@ void setup_PWM(void){
 uint16_t leer_ADC(){
 	
 	// Esta funcion realiza una lectura del ADC y devuelve el valor en milivoltios.
+	// La funcion solo lee el adc que se configuro previamente.
 
 	ADCSRA |= (1 << ADSC);
 	

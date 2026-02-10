@@ -1,7 +1,7 @@
 /*
- * TA2 Control III.c
+ * TA3 Control III.c
  *
- * Created: 18/11/2025 
+ * Created: 1/12/2025 
  * Author : nacho
  */ 
 
@@ -16,37 +16,41 @@
 #include <stdio.h>
 
 // Variables interrupciones
-volatile uint8_t flag_lectura_ADC = 0;
-volatile uint8_t contador_30ms = 0;
-volatile uint16_t contador_15seg = 0;
-volatile uint16_t contador_3seg = 0;
-extern volatile int32_t e;
-extern volatile int32_t i;
+volatile uint8_t flag_muestreo = 0;
+volatile uint8_t flag_perturbacion = 0;
+volatile uint8_t contador_muestreo = 0;
+volatile uint16_t contador_referencia = 0;
+volatile uint16_t contador_perturbacion = 0;
 
 ISR(TIMER2_COMPA_vect) // Interrupción cada 1 ms
 {
-    if (++contador_30ms >= 30)
+    if (++contador_muestreo >= 30) // Muestreo
     {
-        contador_30ms = 0;
-		flag_lectura_ADC = 1;
+        contador_muestreo = 0;
+		flag_muestreo = 1;
+		// PORTB ^= (1 << PB0);
 
 	}
 
-    if (++contador_15seg >= 10000) 
+    if (++contador_referencia >= 10000) 
     {
-
-        contador_15seg = 0;
+        contador_referencia = 0;
+		contador_perturbacion = 0;
+		flag_perturbacion = 1;
 		cambiar_referencia(1000, 4000); // Cambia la referencia entre 1V y 4V cada 10 segundos
+		delta = (referencia == 1000) ? 0 : 1000;
 		PORTB ^= (1 << PB0);
-
 	}
-    // Descomentar para activar perturbacion automatica cada 3 seg
-    // if (++contador_3seg >= 3000) 
-	// {
-	// 	contador_3seg = 0;
-	// 	perturbacion_activada = 1;
-	// 	delta = (delta == 0) ? 1000 : 0;
-	// }
+
+	if (flag_perturbacion)
+	{
+		if (++contador_perturbacion >= 5000)  // Cada 5 segundos, se activa o desactiva la perturbación.
+		{
+			flag_perturbacion = 0;
+			delta = (delta == 0) ? 1000 : 0; // Cambia entre 0 y 1V de perturbación.
+
+		}
+	}
 }
 
 ISR(PCINT2_vect) { // Interrupción cuando se presiona el switch 1 (PD4)
@@ -54,16 +58,17 @@ ISR(PCINT2_vect) { // Interrupción cuando se presiona el switch 1 (PD4)
     if (PIND & (1 << PD4)) {
 
 		perturbacion_activada = 1;
-		delta = 500; 
-
-    }
-
-};
+		delta = 3500; 
+		PORTB |= (1 << PB0); // Enciende LED indicador
+}
+}
 
 ISR(INT1_vect) // Interrupción cuando se presiona el switch 2 (PD3)
 {
-		 perturbacion_activada = 1;
-		 delta = 0; 
+
+		perturbacion_activada = 0;
+		delta = 0; 
+		PORTB &= ~(1 << PB0); // Apaga LED indicador
 }
 
 ISR(TIMER0_COMPA_vect) // Código que se ejecuta a 61 Hz (cada 16.39 ms)
@@ -103,10 +108,10 @@ ISR(TIMER0_COMPA_vect) // Código que se ejecuta a 61 Hz (cada 16.39 ms)
 		while (1)
 		{
 
-			if (flag_lectura_ADC) {
+			if (flag_muestreo) {
 
-				flag_lectura_ADC = 0;
-				aplicar_control_PID(referencia);
+				flag_muestreo = 0;
+				aplicar_control_MPC(referencia);
 			}
 		}
 
